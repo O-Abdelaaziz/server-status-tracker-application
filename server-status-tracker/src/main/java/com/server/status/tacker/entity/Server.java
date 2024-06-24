@@ -1,15 +1,24 @@
 package com.server.status.tacker.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.server.status.tacker.enumeration.Status;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
+import org.ocpsoft.prettytime.PrettyTime;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -19,6 +28,7 @@ import java.util.UUID;
  * @User LegendDZ
  * @Author Abdelaaziz Ouakala
  **/
+@Schema(description = "Server Model Information")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -31,25 +41,69 @@ public class Server implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Schema(description = "server uid", example = "1db5333e-42b0-44b1-8fb5-7acd84f10009")
     @UuidGenerator
     private String uid;
 
+    @Schema(description = "server owner", example = "O.Abdelaaziz")
+    @Column(name = "owner")
+    private String owner;
+
+    @Schema(description = "server ipAddress", example = "10.10.10.25")
     @NotEmpty(message = "IP Address cannot be empty or null")
     @Column(name = "ip_address", unique = true)
     private String ipAddress;
 
+    @Schema(description = "server name", example = "Linux Virtual Machine")
     @Column(name = "name")
     private String name;
 
+    @Schema(description = "server memory", example = "64 GB")
     @Column(name = "memory")
     private String memory;
 
+    @Schema(description = "server icon", example = "fas fa-server fa-x2")
     @Column(name = "icon")
     private String icon;
 
+    @Schema(description = "server type", example = "Mail Server")
     @Column(name = "type")
     private String type;
 
+    @Schema(description = "server status", example = "SERVER_UP")
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;
+
+    @Schema(description = "server lastCheck", example = "2024-06-24T13:47:40.273Z")
+    @Column(name = "last_check")
+    private LocalDateTime lastCheck;
+    @Schema(description = "server created date", example = "2024-06-24T13:47:40.273Z")
+    @CreationTimestamp
+    @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @Schema(description = "server updated date", example = "2024-06-24T13:47:40.273Z")
+    @UpdateTimestamp
+    @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm")
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm")
+    @Column(name = "updated_at", nullable = true, insertable = false)
+    private LocalDateTime updatedAt;
+
+    public String createdTimeAgo() {
+        PrettyTime pretty = new PrettyTime();
+        return pretty.format(this.createdAt);
+    }
+
+    public String updatedTimeAgo() {
+        PrettyTime pretty = new PrettyTime();
+        return pretty.format(this.updatedAt);
+    }
+
+    public String lastCheckTimeAgo() {
+        PrettyTime pretty = new PrettyTime();
+        return pretty.format(this.lastCheck);
+    }
 }
