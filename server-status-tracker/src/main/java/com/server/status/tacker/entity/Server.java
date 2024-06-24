@@ -7,8 +7,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.UuidGenerator;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 /**
  * @Created 23/06/2024 - 14:06
@@ -29,8 +31,11 @@ public class Server implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @UuidGenerator
+    private String uid;
+
     @NotEmpty(message = "IP Address cannot be empty or null")
-    @Column(name = "ip_address",unique = true)
+    @Column(name = "ip_address", unique = true)
     private String ipAddress;
 
     @Column(name = "name")
