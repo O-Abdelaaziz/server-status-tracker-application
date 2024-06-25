@@ -3,6 +3,7 @@ package com.server.status.tacker.resource;
 import com.server.status.tacker.entity.Server;
 import com.server.status.tacker.enumeration.Status;
 import com.server.status.tacker.payload.response.Response;
+import com.server.status.tacker.payload.response.ServerResponse;
 import com.server.status.tacker.service.IServerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -79,7 +80,7 @@ public class ServerController {
     @Parameters({@Parameter(name = "uid", description = "Display servers by uid")})
     @GetMapping("/server/{uid}")
     public ResponseEntity<Response> getServer(@PathVariable(name = "uid") String uid) throws IOException {
-        Server server = iServerService.findByUid(uid);
+        ServerResponse server = iServerService.findByUid(uid);
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())
@@ -101,7 +102,7 @@ public class ServerController {
     @Parameters({@Parameter(name = "ipAddress", description = "Display servers by ipAddress")})
     @GetMapping("/ping/{ipAddress}")
     public ResponseEntity<Response> pingServer(@PathVariable(name = "ipAddress") String ipAddress) throws IOException {
-        Server server = iServerService.ping(ipAddress);
+        ServerResponse server = iServerService.ping(ipAddress);
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())
@@ -123,7 +124,7 @@ public class ServerController {
     @Parameters({@Parameter(name = "server", description = "Save new server by providing a server object")})
     @PostMapping("/save")
     public ResponseEntity<Response> save(@Valid @RequestBody Server server) throws IOException {
-        Server savedServer = iServerService.save(server);
+        ServerResponse savedServer = iServerService.save(server);
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())
@@ -148,7 +149,7 @@ public class ServerController {
     })
     @PutMapping("/update/{uid}")
     public ResponseEntity<Response> update(@PathVariable(name = "uid") String uid, @Valid @RequestBody Server server) {
-        Server updatedServer = iServerService.update(uid, server);
+        ServerResponse updatedServer = iServerService.update(uid, server);
         return ResponseEntity.ok(
                 Response.builder()
                         .timeStamp(LocalDateTime.now())

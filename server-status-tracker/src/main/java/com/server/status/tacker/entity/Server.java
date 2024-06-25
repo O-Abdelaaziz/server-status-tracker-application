@@ -93,25 +93,27 @@ public class Server implements Serializable {
     @Column(name = "updated_at", nullable = true, insertable = false)
     private LocalDateTime updatedAt;
 
-    @Transient
-    private String lastCheckTimeAgo = this.lastCheckTimeAgo();
-    @Transient
-    private String createdAtTimeAgo = this.createdTimeAgo();
-    @Transient
-    private String updatedAtTimeAgo = this.updatedTimeAgo();
-
     public String createdTimeAgo() {
         PrettyTime pretty = new PrettyTime(new Locale("en"));
-        return pretty.format(this.createdAt);
+        if (this.createdAt != null) {
+            return pretty.format(this.createdAt);
+        }
+        return null;
     }
 
     public String updatedTimeAgo() {
         PrettyTime pretty = new PrettyTime(new Locale("en"));
-        return pretty.format(this.updatedAt);
+        if (this.updatedAt != null) {
+            return pretty.format(this.updatedAt);
+        }
+        return null;
     }
 
     public String lastCheckTimeAgo() {
         PrettyTime pretty = new PrettyTime(new Locale("en"));
-        return pretty.format(this.lastCheck);
+        if (this.lastCheck != null) {
+            return pretty.format(this.lastCheck);
+        }
+        return null;
     }
 }

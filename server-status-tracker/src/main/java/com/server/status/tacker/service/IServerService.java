@@ -1,6 +1,7 @@
 package com.server.status.tacker.service;
 
 import com.server.status.tacker.entity.Server;
+import com.server.status.tacker.payload.response.ServerResponse;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -15,19 +16,19 @@ import java.util.List;
  * @Author Abdelaaziz Ouakala
  **/
 public interface IServerService {
-    Server ping(String ipAddress) throws IOException;
+    ServerResponse ping(String ipAddress) throws IOException;
 
-    List<Server> servers();
+    List<ServerResponse> servers();
 
-    Collection<Server> serversByLimit(int limit);
+    Collection<ServerResponse> serversByLimit(int limit);
 
-    Server findByUid(String uid);
+    ServerResponse findByUid(String uid);
 
-    Server findByIpAddress(String ipAddress);
+    ServerResponse findByIpAddress(String ipAddress);
 
-    Server save(Server server);
+    ServerResponse save(Server server);
 
-    Server update(String uid, Server server);
+    ServerResponse update(String uid, Server server);
 
     Boolean delete(String uid);
 }
