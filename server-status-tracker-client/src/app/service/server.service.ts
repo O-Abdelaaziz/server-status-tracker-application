@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CustomResponse } from '../model/custom-response';
 import { Observable, throwError} from 'rxjs';
@@ -10,8 +10,8 @@ import { Status } from '../model/status';
   providedIn: 'root',
 })
 export class ServerService {
-  private readonly API_URL = 'http://localhost:8080';
-  private _httpClient: HttpClient = Inject(HttpClient);
+  private readonly API_URL = 'http://localhost:8080/api';
+   _httpClient = inject(HttpClient);
 
   public ping$ = (ipAddress: string) =>
     this._httpClient
@@ -40,7 +40,8 @@ export class ServerService {
   public servers$ =<Observable<CustomResponse>>
       this._httpClient
       .get<CustomResponse>(`${this.API_URL}/servers/limit/`+30)
-      .pipe(tap(console.log), catchError(this.handleError));
+      .pipe(tap(l=>{console.log(`${this.API_URL}/servers/limit/`+30);
+      }),catchError(this.handleError));
 
   public server$ = (uid: number) =>
     this._httpClient
@@ -65,6 +66,6 @@ export class ServerService {
   private handleError(handleError: HttpErrorResponse): Observable<never> {
     console.log(handleError);
 
-    throw new Error(`An error occurred - Error code: ${handleError.status}`);
+    throw new Error(`An error occurred (${handleError.error}) - Error code: ${handleError.status}`);
   }
 }

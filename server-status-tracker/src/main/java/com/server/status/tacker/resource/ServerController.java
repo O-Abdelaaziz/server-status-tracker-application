@@ -65,7 +65,7 @@ public class ServerController {
                         .statusCode(HttpStatus.OK.value())
                         .status(HttpStatus.OK)
                         .message("Servers Retrieved")
-                        .data(Map.of("servers", iServerService.serversByLimit(limit)))
+                        .data(Map.of("servers", iServerService.serversByLimit(30)))
                         .build());
     }
 
