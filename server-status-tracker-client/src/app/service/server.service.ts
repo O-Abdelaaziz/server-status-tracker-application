@@ -1,7 +1,8 @@
 import { Inject, Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { CustomResponse } from '../model/custom-response';
-import { Observable, catchError, tap } from 'rxjs';
+import { Observable, throwError} from 'rxjs';
+import { tap, catchError } from 'rxjs/operators';
 import { ServerResponse } from '../model/server-response';
 import { Status } from '../model/status';
 
@@ -36,9 +37,9 @@ export class ServerService {
     )
       .pipe(tap(console.log), catchError(this.handleError));
 
-  public servers$ = (limit: number) =>
-    this._httpClient
-      .get<CustomResponse>(`${this.API_URL}/servers/limit/${limit}`)
+  public servers$ =<Observable<CustomResponse>>
+      this._httpClient
+      .get<CustomResponse>(`${this.API_URL}/servers/limit/`+30)
       .pipe(tap(console.log), catchError(this.handleError));
 
   public server$ = (uid: number) =>

@@ -1,7 +1,7 @@
-import { DateState } from './data-state';
+import { DataState } from './data-state';
 
 export interface AppState<T> {
-  dataState: DateState;
+  dataState: DataState;
   appData?: T;
   error?: string;
 }
