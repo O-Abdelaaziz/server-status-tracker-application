@@ -71,6 +71,16 @@ public class Server implements Serializable {
     @Column(name = "type")
     private String type;
 
+    @Schema(description = "is server deleted", example = "true")
+    @Column(name = "is_deleted")
+    private Boolean isDeleted = false;
+
+    @Schema(description = "server delete date", example = "2024-06-24T13:47:40.273Z")
+    @DateTimeFormat(pattern = "dd-MM-yyyy HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy HH:mm")
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @Schema(description = "server status", example = "SERVER_UP")
     @Enumerated(EnumType.STRING)
     @Column(name = "status")

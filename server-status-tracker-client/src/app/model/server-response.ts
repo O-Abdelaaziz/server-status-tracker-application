@@ -3,12 +3,12 @@ import { Status } from './status';
 export interface ServerResponse {
   id: number;
   uid: string;
+  name: string;
   owner: string;
   ipAddress: string;
-  name: string;
   memory: string;
-  icon: string;
   type: string;
+  icon: string;
   status: Status;
   lastCheck: Date;
   lastCheckTimeAgo: string;

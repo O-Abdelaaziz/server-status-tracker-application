@@ -1,6 +1,7 @@
 package com.server.status.tacker.converter;
 
 import com.server.status.tacker.entity.Server;
+import com.server.status.tacker.payload.requests.ServerRequest;
 import com.server.status.tacker.payload.response.ServerResponse;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Component;
  **/
 @Component
 public class ServerRequestConverter {
-
     private final ModelMapper modelMapper;
 
     @Autowired
@@ -23,19 +23,11 @@ public class ServerRequestConverter {
         this.modelMapper = modelMapper;
     }
 
-    public ServerResponse convertServerToServerResponse(Server server) {
-
-        ServerResponse serverResponse = modelMapper.map(server, ServerResponse.class);
-        serverResponse.setCreatedAtTimeAgo(server.createdTimeAgo());
-        serverResponse.setUpdatedAtTimeAgo(server.updatedTimeAgo());
-        serverResponse.setLastCheckTimeAgo(server.lastCheckTimeAgo());
-
-        return serverResponse;
+    public ServerRequest convertServerToServerRequest(Server server) {
+        return modelMapper.map(server, ServerRequest.class);
     }
 
-
-    public Server convertServerResponseToServer(ServerResponse serverResponse) {
-        Server server = modelMapper.map(serverResponse, Server.class);
-        return server;
+    public Server convertServerRequestToServer(ServerRequest serverRequest) {
+        return modelMapper.map(serverRequest, Server.class);
     }
 }

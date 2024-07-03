@@ -1,8 +1,7 @@
 package com.server.status.tacker.resource;
 
 import com.server.status.tacker.entity.Server;
-import com.server.status.tacker.enumeration.Status;
-import com.server.status.tacker.payload.response.Response;
+import com.server.status.tacker.payload.requests.ServerRequest;
 import com.server.status.tacker.payload.response.ServerResponse;
 import com.server.status.tacker.service.IServerService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,18 +14,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @Created 24/06/2024 - 09:00
@@ -54,19 +45,10 @@ public class ServerController {
             @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = Server.class), mediaType = "application/json")}),
             @ApiResponse(responseCode = "404", content = {@Content(schema = @Schema())}),
             @ApiResponse(responseCode = "500", content = {@Content(schema = @Schema())})})
-    @Parameters({@Parameter(name = "limit", description = "Display servers by limit")})
-    @GetMapping("/limit/{limit}")
-    public ResponseEntity<Response> servers(
-            @Parameter(description = "Display servers by limit")
-            @PathVariable(name = "limit") int limit) {
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .statusCode(HttpStatus.OK.value())
-                        .status(HttpStatus.OK)
-                        .message("Servers Retrieved")
-                        .data(Map.of("servers", iServerService.serversByLimit(30)))
-                        .build());
+//    @Parameters({@Parameter(name = "limit", description = "Display servers by limit")})
+    @GetMapping
+    public ResponseEntity<Collection<ServerResponse>> servers() {
+        return ResponseEntity.ok(iServerService.serversByLimit(30));
     }
 
     @Operation(
@@ -78,17 +60,10 @@ public class ServerController {
             @ApiResponse(responseCode = "404", content = {@Content(schema = @Schema())}),
             @ApiResponse(responseCode = "500", content = {@Content(schema = @Schema())})})
     @Parameters({@Parameter(name = "uid", description = "Display servers by uid")})
-    @GetMapping("/server/{uid}")
-    public ResponseEntity<Response> getServer(@PathVariable(name = "uid") String uid) throws IOException {
+    @GetMapping("/{uid}")
+    public ResponseEntity<ServerResponse> getServer(@PathVariable(name = "uid") String uid) throws IOException {
         ServerResponse server = iServerService.findByUid(uid);
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .statusCode(HttpStatus.OK.value())
-                        .status(HttpStatus.OK)
-                        .message("Server Retrieved")
-                        .data(Map.of("Server", server))
-                        .build());
+        return ResponseEntity.ok(server);
     }
 
     @Operation(
@@ -101,16 +76,9 @@ public class ServerController {
             @ApiResponse(responseCode = "500", content = {@Content(schema = @Schema())})})
     @Parameters({@Parameter(name = "ipAddress", description = "Display servers by ipAddress")})
     @GetMapping("/ping/{ipAddress}")
-    public ResponseEntity<Response> pingServer(@PathVariable(name = "ipAddress") String ipAddress) throws IOException {
+    public ResponseEntity<ServerResponse> pingServer(@PathVariable(name = "ipAddress") String ipAddress) throws IOException {
         ServerResponse server = iServerService.ping(ipAddress);
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .statusCode(HttpStatus.OK.value())
-                        .status(HttpStatus.OK)
-                        .message(server.getStatus() == Status.SERVER_UP ? "Ping Success" : "Ping Failed")
-                        .data(Map.of("Server", server))
-                        .build());
+        return ResponseEntity.ok(server);
     }
 
     @Operation(
@@ -122,17 +90,10 @@ public class ServerController {
             @ApiResponse(responseCode = "404", content = {@Content(schema = @Schema())}),
             @ApiResponse(responseCode = "500", content = {@Content(schema = @Schema())})})
     @Parameters({@Parameter(name = "server", description = "Save new server by providing a server object")})
-    @PostMapping("/save")
-    public ResponseEntity<Response> save(@Valid @RequestBody Server server) throws IOException {
-        ServerResponse savedServer = iServerService.save(server);
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .statusCode(HttpStatus.CREATED.value())
-                        .status(HttpStatus.CREATED)
-                        .message("Server was created successfully")
-                        .data(Map.of("Server", savedServer))
-                        .build());
+    @PostMapping
+    public ResponseEntity<ServerResponse> save(@Valid @RequestBody ServerRequest serverRequest) throws IOException {
+        ServerResponse savedServer = iServerService.save(serverRequest);
+        return ResponseEntity.ok(savedServer);
     }
 
     @Operation(
@@ -147,17 +108,10 @@ public class ServerController {
             @Parameter(name = "server", description = "Update server by providing a server object"),
             @Parameter(name = "uid", description = "Update server by providing a uid parameter", required = true),
     })
-    @PutMapping("/update/{uid}")
-    public ResponseEntity<Response> update(@PathVariable(name = "uid") String uid, @Valid @RequestBody Server server) {
-        ServerResponse updatedServer = iServerService.update(uid, server);
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .statusCode(HttpStatus.CREATED.value())
-                        .status(HttpStatus.CREATED)
-                        .message("Server was updated successfully")
-                        .data(Map.of("Server", updatedServer))
-                        .build());
+    @PutMapping("/{uid}")
+    public ResponseEntity<ServerResponse> update(@PathVariable(name = "uid") String uid, @Valid @RequestBody ServerRequest serverRequest) throws IOException {
+        ServerResponse updatedServer = iServerService.update(uid, serverRequest);
+        return ResponseEntity.ok(updatedServer);
     }
 
     @Operation(
@@ -171,29 +125,9 @@ public class ServerController {
     @Parameters({
             @Parameter(name = "uid", description = "delete server by providing a uid parameter", required = true),
     })
-    @DeleteMapping("/delete/{uid}")
-    public ResponseEntity<Response> delete(@PathVariable(name = "uid") String uid) {
+    @DeleteMapping("/{uid}")
+    public ResponseEntity<Boolean> delete(@PathVariable(name = "uid") String uid) {
         Boolean isServerDeleted = iServerService.delete(uid);
-        return ResponseEntity.ok(
-                Response.builder()
-                        .timeStamp(LocalDateTime.now())
-                        .statusCode(HttpStatus.NO_CONTENT.value())
-                        .status(HttpStatus.NO_CONTENT)
-                        .message(isServerDeleted.booleanValue() == Boolean.TRUE ? "Server was deleted successfully" : "Something went wrong, please tray again later.")
-                        .data(Map.of("Server Deleted", isServerDeleted))
-                        .build());
-    }
-
-    @Operation(
-            summary = "Retrieve a Server icon by file name",
-            description = "Get a Server icon by specifying it file name. The response is Server object.",
-            tags = {"servers", "getByFileName"})
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", content = {@Content(schema = @Schema(implementation = Server.class), mediaType = "application/json")}),
-            @ApiResponse(responseCode = "404", content = {@Content(schema = @Schema())}),
-            @ApiResponse(responseCode = "500", content = {@Content(schema = @Schema())})})
-    @GetMapping(path = "/icon/{fileName}", produces = MediaType.IMAGE_PNG_VALUE)
-    public byte[] serverIcon(@PathVariable(name = "fileName") String fileName) throws IOException {
-        return Files.readAllBytes(Paths.get(System.getProperty("user.home") + "Downloads/icons/" + fileName));
+        return ResponseEntity.ok(isServerDeleted);
     }
 }

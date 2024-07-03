@@ -1,12 +1,13 @@
 package com.server.status.tacker.service.impl;
 
 import com.server.status.tacker.converter.ServerRequestConverter;
+import com.server.status.tacker.converter.ServerResponseConverter;
 import com.server.status.tacker.entity.Server;
 import com.server.status.tacker.enumeration.Status;
+import com.server.status.tacker.payload.requests.ServerRequest;
 import com.server.status.tacker.payload.response.ServerResponse;
 import com.server.status.tacker.repository.ServerRepository;
 import com.server.status.tacker.service.IServerService;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,30 +34,28 @@ import java.util.stream.Collectors;
 public class ServerServiceImpl implements IServerService {
     private final ServerRepository serverRepository;
     private final ServerRequestConverter serverRequestConverter;
+    private final ServerResponseConverter serverResponseConverter;
 
     @Autowired
-    public ServerServiceImpl(ServerRepository serverRepository, ServerRequestConverter serverRequestConverter) {
+    public ServerServiceImpl(ServerRepository serverRepository, ServerRequestConverter serverRequestConverter, ServerResponseConverter serverResponseConverter) {
         this.serverRepository = serverRepository;
         this.serverRequestConverter = serverRequestConverter;
+        this.serverResponseConverter = serverResponseConverter;
     }
 
     @Override
     public ServerResponse ping(String ipAddress) throws IOException {
         Server server = serverRepository.findByIpAddress(ipAddress);
-        InetAddress address = InetAddress.getByName(ipAddress);
-        server.setStatus(address.isReachable(10000) ? Status.SERVER_UP : Status.SERVER_DOWN);
-        server.setLastCheck(LocalDateTime.now());
+        checkPingStatus(ipAddress, server);
         Server savedServer = serverRepository.save(server);
-        ServerResponse serverResponse = serverRequestConverter.convertServerToServerResponse(savedServer);
-        return serverResponse;
+        return serverResponseConverter.convertServerToServerResponse(savedServer);
     }
-
     @Override
     public List<ServerResponse> servers() {
         List<Server> servers = serverRepository.findAll();
         return servers
                 .stream()
-                .map(serverRequestConverter::convertServerToServerResponse)
+                .map(serverResponseConverter::convertServerToServerResponse)
                 .collect(Collectors.toList());
     }
 
@@ -65,7 +64,7 @@ public class ServerServiceImpl implements IServerService {
         List<Server> servers = serverRepository.findAll().stream().limit(limit).toList();
         return servers
                 .stream()
-                .map(serverRequestConverter::convertServerToServerResponse)
+                .map(serverResponseConverter::convertServerToServerResponse)
                 .collect(Collectors.toList());
     }
 
@@ -75,8 +74,7 @@ public class ServerServiceImpl implements IServerService {
         if (Objects.isNull(server)) {
             throw new IllegalArgumentException("Server not found by the provided uid: " + uid);
         }
-        ServerResponse serverResponse = serverRequestConverter.convertServerToServerResponse(server);
-        return serverResponse;
+        return serverResponseConverter.convertServerToServerResponse(server);
     }
 
     @Override
@@ -85,34 +83,34 @@ public class ServerServiceImpl implements IServerService {
         if (Objects.isNull(server)) {
             throw new IllegalArgumentException("Server not found by the provided IP Address: " + ipAddress);
         }
-        ServerResponse serverResponse = serverRequestConverter.convertServerToServerResponse(server);
 
-        return serverResponse;
+        return serverResponseConverter.convertServerToServerResponse(server);
     }
 
     @Override
-    public ServerResponse save(Server server) {
+    public ServerResponse save(ServerRequest serverRequest) throws IOException {
+        Server server = serverRequestConverter.convertServerRequestToServer(serverRequest);
+        checkPingStatus(serverRequest.getIpAddress(), server);
         Server savedServer = serverRepository.save(server);
-        ServerResponse serverResponse = serverRequestConverter.convertServerToServerResponse(savedServer);
-        return serverResponse;
+        return serverResponseConverter.convertServerToServerResponse(savedServer);
     }
 
     @Override
-    public ServerResponse update(String uid, Server server) {
+    public ServerResponse update(String uid, ServerRequest serverRequest) throws IOException {
+
         Server getServer = serverRepository.findByUid(uid);
         if (Objects.isNull(getServer)) {
             throw new IllegalArgumentException("Server not found by the provided uid: " + uid);
         }
-        getServer.setName(server.getName());
-        getServer.setIpAddress(server.getIpAddress());
-        getServer.setMemory(server.getMemory());
-        getServer.setType(server.getType());
-        getServer.setIcon(server.getIcon());
-        getServer.setStatus(server.getStatus());
 
+        getServer.setName(serverRequest.getName());
+        getServer.setIpAddress(serverRequest.getIpAddress());
+        getServer.setMemory(serverRequest.getMemory());
+        getServer.setType(serverRequest.getType());
+        getServer.setIcon(serverRequest.getIcon());
+        checkPingStatus(serverRequest.getIpAddress(), getServer);
         Server updatedServer = serverRepository.save(getServer);
-        ServerResponse serverResponse = serverRequestConverter.convertServerToServerResponse(updatedServer);
-        return serverResponse;
+        return serverResponseConverter.convertServerToServerResponse(updatedServer);
     }
 
     @Override
@@ -123,6 +121,12 @@ public class ServerServiceImpl implements IServerService {
         }
         serverRepository.delete(getServer);
         return true;
+    }
+
+    private static void checkPingStatus(String ipAddress, Server server) throws IOException {
+        InetAddress address = InetAddress.getByName(ipAddress);
+        server.setStatus(address.isReachable(10000) ? Status.SERVER_UP : Status.SERVER_DOWN);
+        server.setLastCheck(LocalDateTime.now());
     }
 
     private String setServerIcon() {

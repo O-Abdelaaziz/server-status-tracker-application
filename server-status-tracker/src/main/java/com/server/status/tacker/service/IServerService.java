@@ -1,6 +1,7 @@
 package com.server.status.tacker.service;
 
 import com.server.status.tacker.entity.Server;
+import com.server.status.tacker.payload.requests.ServerRequest;
 import com.server.status.tacker.payload.response.ServerResponse;
 
 import java.io.IOException;
@@ -26,9 +27,9 @@ public interface IServerService {
 
     ServerResponse findByIpAddress(String ipAddress);
 
-    ServerResponse save(Server server);
+    ServerResponse save(ServerRequest serverRequest) throws IOException;
 
-    ServerResponse update(String uid, Server server);
+    ServerResponse update(String uid, ServerRequest serverRequest) throws IOException;
 
     Boolean delete(String uid);
 }

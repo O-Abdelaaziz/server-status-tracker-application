@@ -1,88 +1,213 @@
-<!-- <div>{{ appState$ | async | json }}</div> -->
-<div class="container-xl">
-    <div class="table-responsive">
-        <div class="table-wrapper">
-            <div class="table-title">
-                <div class="row">
-                    <div class="col-sm-6">
-                        <h2>Servers Status Tracker</h2>
-                    </div>
-                    <div class="col-sm-6">
-                        <button type="button" class="btn btn-primary">Print Report</button>
-  
-                        <a href="#addEmployeeModal" class="btn btn-success" data-toggle="modal">
-                            <i class="material-icons">&#xE147;</i>
-                            <span>New Server</span>
-                        </a>
-  
-                        <span>
-                            <select name="status" ngModel="ALL"  
-                                class="btn btn-info" style="height: 32.91px;">
-                                <option value="ALL">ALL</option>
-                                <option value="SERVER_UP">SERVER UP</option>
-                                <option value="SERVER_DOWN">SERVER DOWN</option>
-                            </select>
-                        </span>
-                    </div>
-                </div>
-            </div> <br>
-            <ng-container *ngIf="(appState$ | async) as appState" [ngSwitch]="appState.dataState">
-                <ng-container *ngSwitchCase="DataState.LOADING_STATE">
-                    <div class="col-md-12 single-note-item text-center">
-                        <div class="spinner-border text-info" role="status"></div>
-                    </div>
-                </ng-container>
-                <ng-container *ngSwitchCase="DataState.LOADED_STATE">
-                    <table class="table table-striped table-hover" id="servers">
-                        <thead>
-                            <tr>
-                                <th>Image</th>
-                                <th>IP Address</th>
-                                <th>Name</th>
-                                <th>Memory</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Ping</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody *ngFor="let server of appState.appData?.data?.servers; let i = index" >
-                            <tr>
-                                <td> <img [src]="server.icon" [alt]="server.name" width="40" height="40"></td>
-                                <td>{{ server.ipAddress }}</td>
-                                <td>{{ server.name }}</td>
-                                <td>{{ server.memory }}</td>
-                                <td>{{ server.type }}</td>
-                                <td>
-                                    <span class="badge" 
-                                    [ngClass]="[server.status === Status.SERVER_UP ? ' badge-success' : ' badge-danger']">
-                                      {{ server.status === Status.SERVER_UP ? 'SERVER UP' : 'SERVER DOWN' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <a  style="cursor: pointer;">
-                                        <i *ngIf="(filterStatus$ | async) === '' || (filterStatus$ | async) !== server.ipAddress"
-                                            class="material-icons" title="Ping server">&#xe328; </i>
-                                        <i *ngIf="(filterStatus$ | async) === server.ipAddress"
-                                            class="fa fa-spinner fa-spin" style="font-size:24px"></i>
-                                    </a>
-                                    <p class="mt-2">Last check:{{server.lastCheckTimeAgo}}</p>
-                                </td>
-                                <td>
-                                    <a  class="delete" data-toggle="modal"
-                                        style="cursor: pointer;"><i class="material-icons" data-toggle="tooltip"
-                                            title="Delete">&#xE872;</i></a>
-                                </td>
-                        </tbody>
-                    </table>
-                </ng-container>
-                <ng-container *ngSwitchCase="DataState.ERROR_STATE">
-                    <div class="alert-danger">
-                        {{ appState.error }}
-                    </div>
-                </ng-container>
-            </ng-container>
-        </div>
+<app-top-header ></app-top-header>
+<app-main-header (openModel)="showDialog()"></app-main-header>
+
+<div class="px-4 py-5 md:px-6 lg:px-8" style="margin-top: -50px">
+  <app-stats [servers]="allServers" [serversUp]="allServersUp" [serversDown]="allServersDown"></app-stats>
+
+  <div class="p-4 mt-5 shadow-2 border-round px-4 py-5 md:px-6 lg:px-8 bg-white">
+    <div class="text-3xl font-medium text-900 mb-3">Server Status Tracker</div>
+
+    <div class="font-medium text-500 mb-3">
+      <p-messages [(value)]="messages" [enableService]="false" [closable]="true" />
     </div>
+
+    <p-tabView>
+      <p-tabPanel header="All Server">
+        <p>
+          <p-table [value]="servers" [tableStyle]="{ 'min-width': '50rem' }" styleClass="p-datatable-gridlines">
+            <ng-template pTemplate="header">
+              <tr>
+                <th></th>
+                <th>Name</th>
+                <th>IP Address</th>
+                <th>Memory</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Ping</th>
+                <th>Action</th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-server>
+              <tr>
+                <td>
+                  <!-- <i class="pi pi-server"></i> -->
+                  <i [ngClass]="server.icon ? server.icon : 'fa-solid fa-server fa-2x'"></i>
+                </td>
+
+                <td>
+                  <p class="text-500 mb-0">{{ server.name }}</p>
+                  <span class="text-400">Owner: {{ server.owner }}</span>
+                </td>
+
+                <td>{{ server.ipAddress}}</td>
+
+                <td>{{ server.memory }}</td>
+
+                <td>{{ server.type }}</td>
+
+                <td class="text-center">
+                  <p-badge *ngIf="server.status=='SERVER_UP'" value="SERVER UP" severity="success" />
+                  <p-badge *ngIf="server.status=='SERVER_DOWN'" value="SERVER DOWN" severity="danger" />
+                  <p-badge *ngIf="server.status==null" value="SERVER NOT READY" severity="warning" />
+                </td>
+
+                <td class="text-center">
+                  <button pButton pRipple type="button" [icon]="'pi pi-globe text-primary'"
+                    pTooltip="Ping this server: {{server.ipAddress}}" tooltipPosition="top" (click)="retrieveServers()"
+                    class="p-button-sm p-button-text">
+                  </button>
+                  <p>Last check: {{ server.lastCheckTimeAgo ?server.lastCheckTimeAgo :'server not ready' }}</p>
+                </td>
+
+                <td class="text-center">
+                  <div class="flex justify-content-between align-items-center">
+                    <p-button icon="pi pi-pencil" styleClass="p-button-sm" [raised]="true" [rounded]="true"
+                      severity="success" />
+                    <p-button icon="pi pi-trash" styleClass="p-button-sm" [raised]="true" [rounded]="true"
+                      severity="warning" (click)="onDelete(server.uid)" />
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p>
+      </p-tabPanel>
+      <p-tabPanel header="Active Servers">
+        <p>
+          Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium...
+        </p>
+      </p-tabPanel>
+      <p-tabPanel header="Trached Servers">
+        <p>
+          At vero eos et accusamus et iusto odio dignissimos...
+        </p>
+      </p-tabPanel>
+    </p-tabView>
   </div>
-  
+</div>
+<p-button (click)="showDialog()" label="Show" />
+
+<p-dialog header="Create Or Update Existing Server" [modal]="true" [(visible)]="isDialogVisible"
+  [style]="{ width: '30rem' }">
+  <form [formGroup]="serverFormGroup" novalidate>
+    <div class="grid">
+
+      <div class="field col-12 mb-0">
+        <label for="name" class="block text-900 font-medium mb-1">Name</label>
+        <input pInputText id="name" formControlName="name" placeholder="Linux Machine"
+          class="text-base text-color surface-overlay p-2 border-1 border-solid border-round appearance-none outline-none focus:border-primary w-full"
+          [ngClass]="{ 'ng-invalid ng-dirty':isFromSubmitted &&  form['name'].errors }" />
+
+        <div *ngIf="isFromSubmitted && form['name'].errors" class="p-error block mt-2">
+          <div *ngIf="form['name'].errors['required']">Name is required</div>
+          <div *ngIf="form['name'].errors['minlength']">
+            Name must be at least 2 characters
+          </div>
+          <div *ngIf="form['name'].errors['maxlength']">
+            Name must not exceed 20 characters
+          </div>
+        </div>
+      </div>
+
+      <div class="field col-12 mb-0">
+        <label class="block text-900 font-medium mb-1" for="owner">Owner</label>
+        <input pInputText id="owner" formControlName="owner" placeholder="mr.abdelaaziz"
+          class="text-base text-color surface-overlay p-2 border-1 border-solid border-round appearance-none outline-none focus:border-primary w-full"
+          [ngClass]="{ 'ng-invalid ng-dirty':isFromSubmitted &&  form['owner'].errors }" />
+
+        <div *ngIf="isFromSubmitted && form['owner'].errors" class="p-error block mt-2">
+          <div *ngIf="form['owner'].errors['required']">
+            Owner is required
+          </div>
+          <div *ngIf="form['owner'].errors['minlength']">
+            Owner must be at least 2 characters
+          </div>
+          <div *ngIf="form['owner'].errors['maxlength']">
+            Owner must not exceed 20 characters
+          </div>
+        </div>
+      </div>
+
+      <div class="field col-12 mb-0">
+        <label class="block text-900 font-medium mb-1" for="ip-address">IP Address</label>
+        <input pInputText id="ip-address" aria-describedby="ip-address-help" formControlName="ipAddress"
+          placeholder="192.168.12.120"
+          class="text-base text-color surface-overlay p-2 border-1 border-solid border-round appearance-none outline-none focus:border-primary w-full mb-1"
+          [ngClass]="{ 'ng-invalid ng-dirty':isFromSubmitted &&  form['ipAddress'].errors }" />
+        <small id="ip-address-help" class="mb-3">
+          Enter the server ip address.
+        </small>
+
+        <div *ngIf="isFromSubmitted && form['ipAddress'].errors" class="p-error block mt-2">
+          <div *ngIf="form['ipAddress'].errors['required']">
+            IP Address is required
+          </div>
+          <div *ngIf="form['ipAddress'].errors['pattern']">
+            Invalid IP Address format (Example: 192.168.1.1)
+          </div>
+        </div>
+      </div>
+
+      <div class="field col-12 md:col-6 mb-0">
+        <label class="block text-900 font-medium mb-1" for="memory">Memory</label>
+        <input pInputText id="memory" aria-describedby="memory-help" formControlName="memory"
+          placeholder="512 GB"
+          class="text-base text-color surface-overlay p-2 border-1 border-solid border-round appearance-none outline-none focus:border-primary w-full mb-1"
+          [ngClass]="{ 'ng-invalid ng-dirty':isFromSubmitted &&  form['memory'].errors }" />
+        <small id="memory-help" class="mb-3">
+          Example: 32GB, 64GB, 128GB.
+        </small>
+
+        <div *ngIf="isFromSubmitted && form['memory'].errors" class="p-error block mt-2">
+          <div *ngIf="form['memory'].errors['required']">
+            Memory is required
+          </div>
+        </div>
+      </div>
+
+      <div class="field col-12 md:col-6 mb-0">
+        <label class="block text-900 font-medium mb-1" for="type">Type</label>
+        <input pInputText id="type" aria-describedby="type-help" formControlName="type" placeholder="Windows machine"
+          class="text-base text-color surface-overlay p-2 border-1 border-solid border-round appearance-none outline-none focus:border-primary w-full mb-1"
+          [ngClass]="{ 'ng-invalid ng-dirty':isFromSubmitted &&  form['type'].errors }" />
+        <small id="type-help" class="mb-3">
+          Example: mail server.
+        </small>
+
+        <div *ngIf="isFromSubmitted && form['type'].errors" class="p-error block mt-2">
+          <div *ngIf="form['type'].errors['required']">
+            Type is required
+          </div>
+          <div *ngIf="form['type'].errors['minlength']">
+            Type must be at least 2 characters
+          </div>
+          <div *ngIf="form['type'].errors['maxlength']">
+            Type must not exceed 20 characters
+          </div>
+        </div>
+      </div>
+
+      <div class="field col-12 md:col-12 mb-0">
+        <label class="block text-900 font-medium mb-1" for="icon">Icon</label>
+        <input pInputText id="icon" aria-describedby="icon-help" formControlName="icon"
+          placeholder="fa-solid fa-server fa-2x"
+          class="text-base text-color surface-overlay p-2 border-1 border-solid border-round appearance-none outline-none focus:border-primary w-full mb-1"
+          [ngClass]="{ 'ng-invalid ng-dirty':isFromSubmitted &&  form['icon'].errors }" />
+        <small id="icon-help" class="mb-3">
+          This application utilizes Font Awesome version 6.5.2 for icon support.
+        </small>
+      </div>
+
+    </div>
+    <div class="text-right">
+      <button pButton pRipple label="Save" icon="pi pi-check" severity="info" class="p-button-text"
+        [loading]="isLoading" (click)="onSaveServer()" [disabled]="serverFormGroup.invalid"></button>
+      <button pButton pRipple label="Cancel" icon="pi pi-times" severity="danger" class="p-button-text"
+        (click)="closeDialog()"></button>
+    </div>
+  </form>
+</p-dialog>
+
+<p-confirmDialog />
+<p-toast />
